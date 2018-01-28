@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title> XO </title>
+  <style type="text/css">
+    body {
+      color: #444;
+      width: 100%;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background-color: #E8E8E8;
+      height:100%;
+    }
+
+    #contentBlock {
+      display: inline-block;
+      background-color:white;
+      height: auto !important;
+      min-height: 100%;
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+
+    .panel {
+      overflow: auto;
+    }
+
+    #board {
+      float: left;
+    }
+
+    #board canvas {
+      margin-left: auto;
+      margin-right: auto;
+      display: block;
+    }
+
+    #config {
+      float: left;
+      margin-left: 20px;
+      margin-top:  80px;
+    }
+
+    #config span {
+      margin-right: 10px;
+    }
+
+    .nav-item {
+      padding: 8px 16px;
+      text-decoration: none;
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #000000AF;
+
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    .nav-item:hover {
+      color: #FFFFFFAF;
+      background-color: #0000008F;
+    }
+
+    .divider {
+      width: 75%;
+      margin: 25px auto;
+      border: none;
+      border-top: 1px solid #000000D0;
+    }
+
+  </style>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div id="contentBlock">
+      <center>
+        <h1> Play XO! </h1>
+      </center>
+
+      <div class="panel">
+        <div id="board"></div>
+
+        <div id="config">
+          <center> Players </center><br>
+          <div>
+            <span> 1P </span>
+            <select name="1P" id="1P">
+              <option value="human">Human</option>
+              <option value="mcts">MCTS</option>
+            </select>
+          </div>
+
+          <div>
+            <span> 2P </span>
+            <select name="2P" id="2P">
+              <option value="human">Human</option>
+              <option value="mcts">MCTS</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <br>
+
+      <table align="center">
+        <tr>
+          <td><a class="nav-item" id="btn-start">Start</a></td>
+          <td><a class="nav-item" id="btn-resign">Resign</a></td>
+        </tr>
+      </table>
+
+      <hr class="divider">
+
+      <h1> About </h1>
+    </div>
+
+    <script src="/static/js/slots.js"> </script>
+    <script>
+      // create board
+      var args = {
+          board_size: 3,
+          grid:  {x: 50, y: 50}
+        };
+      var setup = new Setup('board', args);
+      setup.create('board');
+    </script>
+</body>
+</html>
+
