@@ -1,8 +1,7 @@
-from flask import Flask, render_template, request
-from flask_socketio import SocketIO
+from flask import Flask, render_template, request, jsonify
+import numpy as np
 
 app = Flask(__name__, static_folder = "static", template_folder = "templates")
-socketio = SocketIO(app)
 
 @app.route('/')
 def index():
@@ -13,21 +12,38 @@ def start():
     content = request.get_json()
     p1 = content['p1']
     p2 = content['p2']
+    print("#start 1P = {}, 2P = {}".format(p1, p2))
+
+    global board
+    board.fill(-1)
     return 'success'
 
-@app.route('/getPoint', methods=['GET'])
-def getPoint():
-    content = request.get_json()
+@app.route('/onClick', methods=['GET'])
+def onClick():
+    print(request.args)
+    posX = int(request.args.get("posX"))
+    posY = int(request.args.get("posY"))
 
-    lastX, lastY = content['lastX'], content['lastY']
+    global board, turn
 
-from itertools import product
-def strategy(board, lastX, lastY, player):
-    for i in product(range(board_size), repeat=2):
-        if board[i][j] == 0: return (i, j)
-    return None
-
-game = GameAPI()
+    if board[posX][posY] == -1:
+        content = {
+            "status": "success",
+            "posX": posX,
+            "posY": posY,
+            "player": turn % 2,
+        }
+        board[posX][posY] = turn % 2
+        turn += 1
+        return jsonify(content)
+    else:
+        content = {
+            "status": "fail",
+        }
+        return jsonify(content)
 
 if __name__ == '__main__':
-    socketio.run(app)
+    turn  = 0
+    board = np.zeros( (3, 3), dtype = np.int)
+
+    app.run(debug=True)

@@ -74,27 +74,78 @@ var Canvas = function(elemId, args) {
         }
     };
 
+    this.backup = this.ctx.getImageData(0, 0, this.width, this.height);
+
     elem.appendChild(canvas);
-};
 
-Canvas.prototype.start = function () {
-    var p1 = $('#1P').val()
-    var p2 = $('#2P').val()
+    canvas.start = function () {
+        var p1 = $('#1P').val()
+        var p2 = $('#2P').val()
 
-    console.log("P1: " + p1 + ', ' + 'P2: ' + p2);
+        this.ctx.putImageData(this.backup, 0, 0);
 
-    $.post({
-        type: 'POST',
-        url: '/start',
-        data: JSON.stringify({"p1": p1.toString(), "p2": p2.toString()}),
-        contentType: "application/json",
-        dataType: 'json'
+        $.post({
+            type: 'POST',
+            url: '/start',
+            data: JSON.stringify({"p1": p1, "p2": p2}),
+            contentType: "application/json",
+            dataType: 'json'
+        });
+    }.bind(this);
+
+    $("#btn-start").click(function() {
+        canvas.start();
     });
-}
 
-Canvas.prototype.resign = function () {
+    this.getCoordinate = function(pageX, pageY) {
+        var bounds = canvas.getBoundingClientRect(),
+            boardX = (pageX - bounds.left - edge),
+            boardY = (pageY - bounds.top  - edge);
 
-}
+        return {"X": Math.floor( boardX / args.grid.x ),
+                "Y": Math.floor( boardY / args.grid.y )}
+
+    }.bind(this);
+
+    var self = this;
+    canvas.onclick = function(event) {
+        var p = this.getCoordinate(event.clientX, event.clientY);
+        var data = {"posX": p.X, "posY": p.Y};
+
+        var ret = $.getJSON("/onClick", data)
+            .done (function() {
+                var status = ret.responseJSON.status;
+                if (status == 'success'){
+                    var posX = ret.responseJSON.posX,
+                        posY = ret.responseJSON.posY,
+                        player = ret.responseJSON.player;
+
+                    canvas.drawChess(posX, posY, player);
+                }
+            });
+    }.bind(this);
+
+    canvas.drawChess = function(posX, posY, player) {
+        var ox = edge + (posX + 0.5) * args.grid.x,
+            oy = edge + (posY + 0.5) * args.grid.y;
+
+        switch (player) {
+            case 0:
+                this.ctx.fillStyle = '#000000';
+                this.ctx.beginPath();
+                this.ctx.arc(ox, oy, args.grid.x / 2, 2*Math.PI, false);
+                this.ctx.fill();
+                break;
+
+            case 1:
+                this.ctx.fillStyle = '#FFFFFF';
+                this.ctx.beginPath();
+                this.ctx.arc(ox, oy, args.grid.x / 2, 2*Math.PI, false);
+                this.ctx.fill();
+                break;
+        }
+    }.bind(this);
+};
 
 var Setup = function(elemId, args) {
     console.log("Setup ... ");
@@ -112,13 +163,5 @@ var Setup = function(elemId, args) {
 Setup.prototype.create = function(elemId) {
     var jcanvas = new Canvas(elemId, self.args);
     console.log("Add to " + elemId);
-
-    $("#btn-start").click(function() {
-        jcanvas.start();
-    });
-
-    $("#btn-resign").click(function() {
-        jcanvas.resign();
-    });
 };
 
