@@ -22,8 +22,8 @@ def build_fn(Q, **params):
 
     def ctrl_fn(state):
         if Q[state] is None:
-            available_actions = list(zip(*np.where(state==-1)))
-            Q[state] = dict(zip(available_actions, np.zeros(len(available_actions))))
+            valid_actions = state.valid_actions
+            Q[state] = dict(zip(valid_actions, np.zeros(len(valid_actions))))
 
         if not Q[state]:
             return None

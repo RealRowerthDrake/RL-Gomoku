@@ -1,22 +1,12 @@
-from collections import defaultdict
-class Table(object):
-    def __init__(self):
-        self._table = defaultdict(lambda: None)
-
-    def __getitem__(self, k):
-        return self._table[str(k)]
-
-    def __setitem__(self, k, v):
-        self._table[str(k)] = v
-
 from collections import deque
 class Agent(object):
     def __init__(self, maxlen=2):
         self.state = deque(maxlen=maxlen)
         self.action = deque(maxlen=maxlen)
 
+from collections import defaultdict
 def train(env, build_fn, episodes=100, epsilon=0.1, alpha=0.01, gamma=0.1):
-    Q = Table()
+    Q = defaultdict(lambda: None)
     eval_fn, ctrl_fn = build_fn(Q, eps=epsilon, alpha=alpha, gamma=gamma)
 
     for i in range(episodes):

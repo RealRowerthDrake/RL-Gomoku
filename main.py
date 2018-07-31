@@ -1,4 +1,3 @@
-import numpy as np
 import random
 from envs import GomokuEnv
 
@@ -6,16 +5,15 @@ class RandomPlayer(object):
     def __init__(self):
         pass
 
-    def move(self, board):
-        valid_actions = list(zip(*np.where(board == -1)))
-        return random.choice(valid_actions)
+    def move(self, state):
+        return random.choice(state.valid_actions)
 
 class HumanPlayer(object):
     def __init__(self):
         pass
 
-    def move(self, board):
-        print(board)
+    def move(self, state):
+        print(state)
         pos = tuple(map(int, input().split(",")))
         return pos
 
@@ -25,8 +23,7 @@ class TDPlayer(object):
 
     def move(self, state):
         if self._table[state] is None:
-            valid_actions = list(zip(*np.where(state==-1)))
-            return random.choice(valid_actions)
+            return random.choice(state.valid_actions)
         else:
             return max(self._table[state].items(), key=lambda x:x[-1])[0]
 
