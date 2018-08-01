@@ -44,7 +44,7 @@ class GomokuState(object):
         self.board = board
 
     def __hash__(self):
-        return hash(str(self.board))
+        return hash(self.board.tobytes())
 
     def __eq__(self, other):
         return (self.board == other.board).all()
