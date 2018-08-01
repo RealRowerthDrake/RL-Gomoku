@@ -1,13 +1,18 @@
 import numpy as np
 import numba as nb
-import random
+from random import choice
 
 
-def UCB1(node):
-    mean = node.rewards / (node.n + 1e-3)
-    var = 2 * np.log(node.parent.n + 1) / (node.n + 1e-3)
+eps = 1e-3
+
+
+@nb.jit('i4(f4[:],i4[:])')
+def UCB1(rewards, n):
+    mean = rewards / (n + eps)
+    var = 2 * np.log(n.sum() + 1) / (n + eps)
     std = np.sqrt(var)
-    return mean + std
+    ucb = mean + std
+    return np.argmax(ucb)
 
 
 class TreeNode(object):
@@ -15,21 +20,26 @@ class TreeNode(object):
         self.parent = parent
         self.state  = state
 
-        self.rewards = 0
-        self.n = 0
+        self.rewards = None
+        self.n = None
         self.childs = []
 
-    def select(self, policy=UCB1):
-        return max(self.childs, key=policy)
+    def select(self):
+        return self.childs[UCB1(self.rewards, self.n)]
 
     def expand(self):
         for action in self.state.valid_actions:
             self.childs.append(TreeNode(self, self.state.act(action)))
+
+        self.rewards = np.zeros(len(self.childs), dtype='f4')
+        self.n = np.zeros(len(self.childs), dtype='i4')
         return self
 
     def update(self, result):
-        self.rewards += result
-        self.n += 1
+        if self.parent is not None:
+            idx = self.parent.childs.index(self)
+            self.parent.rewards[idx] += result
+            self.parent.n[idx] += 1
         return self.parent
 
     def isLeaf(self):
@@ -41,13 +51,19 @@ def UCT(state, max_iter):
 
     for i in range(max_iter):
         node = root
-        while(node.childs): node = node.select()              # Select
-        if(not node.isLeaf()): node = node.expand().select()  # Expand
+
+        # Select
+        while(node.childs):
+            node = node.select()
+
+        # Expand
+        if(not node.isLeaf()):
+            node = node.expand().select()
 
         # Rollout
         rollout = node.state
         while not rollout.done:
-            rollout = rollout.act(random.choice(rollout.valid_actions))
+            rollout = rollout.act(choice(rollout.valid_actions))
 
         # Backpropagate
         reward = rollout.result
