@@ -7,10 +7,10 @@ def evaluate(env, players, num_games):
     def play_once():
         state = env.reset()
         while(True):
-            action = players[env.cur_player].move(state)
+            action = players[state.cur_player].move(state)
             state, reward, done, _ = env.step(action)
             if done:
-                return reward if env.cur_player == 1 else -reward
+                return reward if state.cur_player == 1 else -reward
     stats = [0] * 3
     for _ in range(num_games):
         stats[play_once()] += 1

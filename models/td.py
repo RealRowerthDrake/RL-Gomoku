@@ -27,7 +27,7 @@ def train(env, build_fn, episodes=100, epsilon=0.1, alpha=0.01, gamma=0.1):
             state, reward, done, _ = env.step(action)
             action = ctrl_fn(state)
 
-            player = env.cur_player
+            player = state.cur_player
             agents[player].state.append(state)
             agents[player].action.append(action)
             if len(agents[player].state) > 1:

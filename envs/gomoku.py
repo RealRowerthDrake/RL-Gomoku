@@ -46,9 +46,11 @@ def check_win(board, pos, num_win):
 
 
 class GomokuState(object):
-    def __init__(self, board):
+    def __init__(self, env, board, last_move, turn):
+        self.env = env
         self.board = board
-        self.board.setflags(write=False)
+        self._last_move = last_move
+        self._turn = turn
 
     def __hash__(self):
         return hash(self.board.tobytes())
@@ -61,6 +63,34 @@ class GomokuState(object):
     def valid_actions(self):
         return list(zip(*np.where(self.board == -1)))
 
+    @property
+    def done(self):
+        if self._last_move is None:
+            return False
+        else:
+            full = self._turn >= self.env._board_size**2
+            win = check_win(self.board, self._last_move, self.env._num_win)
+            return full or win
+
+    @property
+    def cur_player(self):
+        return self._turn % self.env.num_player
+
+    def act(self, action):
+        board = self.board.copy()
+
+        if not available(board, *action):
+            print("Illegal Move for player {}".format(self.cur_player))
+            raise ValueError
+
+        board[action] = self.cur_player
+        return GomokuState(self.env, board, action, self._turn + 1)
+
+    def reset(self):
+        board = self.board.copy()
+        board.fill(-1)
+        return GomokuState(self.env, board, None, 0)
+
 
 class GomokuEnv(gym.Env):
     def __init__(self, board_size, num_win, num_player=2):
@@ -68,45 +98,21 @@ class GomokuEnv(gym.Env):
         self._num_win = num_win
         self._num_player = num_player
 
-        self._board = - np.ones((board_size, board_size), dtype=np.int32)
-        self._turn = None
-        self.reset()
-
-    @property
-    def cur_player(self):
-        return self._turn % self._num_player
+        board = -np.ones( (board_size, board_size), dtype='i4')
+        self.state = GomokuState(self, board, None, 0)
 
     @property
     def num_player(self):
         return self._num_player
 
     def reset(self):
-        self._board.fill(-1)
-        self._turn = 0
-        return GomokuState(self._board.copy())
+        self.state = self.state.reset()
+        return self.state
 
     def step(self, action):
-        x, y = action
-        player = self._turn % self._num_player
-
-        if not available(self._board, x, y):
-            print("Illegal Move for player {}".format(player))
-            print("Board:")
-            print(self._board)
-            print("Action:", action)
-            raise ValueError
-
-        self._board[x, y] = player
-        self._turn += 1
-
-        full = self._turn >= self._board_size**2
-        win = check_win(self._board, (x, y), num_win=self._num_win)
-
-        done = full or win
-        reward = int(win)
-        return GomokuState(self._board.copy()), reward, done, {}
+        self.state = self.state.act(action)
+        reward = int(check_win(self.state.board, action, self._num_win))
+        return self.state, reward, self.state.done, {}
 
     def render(self, mode='human'):
-        board_string = str(self._board)
-        board_string = board_string.replace('[', ' ').replace(']', ' ').replace('-1', '  ')
-        board_string = board_string.replace('0', '-').replace('1', '+')
+        raise NotImplementedError
