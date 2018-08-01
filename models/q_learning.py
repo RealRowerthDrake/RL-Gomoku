@@ -1,6 +1,7 @@
 import numpy as np
 import random
 
+
 def build_fn(Q, **params):
     """Build evaluate & control functions.
 
@@ -32,6 +33,6 @@ def build_fn(Q, **params):
         if random.uniform(0, 1) < params['eps']:
             return random.choice(list(policy.keys()))
         else:
-            return max(policy.items(), key=lambda x:x[-1])[0]
+            return max(policy.items(), key=lambda x: x[-1])[0]
 
     return eval_fn, ctrl_fn

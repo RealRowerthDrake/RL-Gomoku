@@ -1,10 +1,13 @@
 from collections import deque
+from collections import defaultdict
+
+
 class Agent(object):
     def __init__(self, maxlen=2):
         self.state = deque(maxlen=maxlen)
         self.action = deque(maxlen=maxlen)
 
-from collections import defaultdict
+
 def train(env, build_fn, episodes=100, epsilon=0.1, alpha=0.01, gamma=0.1):
     Q = defaultdict(lambda: None)
     eval_fn, ctrl_fn = build_fn(Q, eps=epsilon, alpha=alpha, gamma=gamma)
@@ -20,7 +23,7 @@ def train(env, build_fn, episodes=100, epsilon=0.1, alpha=0.01, gamma=0.1):
         agents[0].state.append(state)
         agents[0].action.append(action)
 
-        while(True):
+        while True:
             state, reward, done, _ = env.step(action)
             action = ctrl_fn(state)
 

@@ -1,7 +1,8 @@
 import numpy as np
+import numba as nb
 import gym
 
-import numba as nb
+
 @nb.jit(nb.boolean(nb.i4[:, :], nb.i4, nb.i4))
 def valid(board, x, y):
     board_size = board.shape[0]
@@ -9,20 +10,22 @@ def valid(board, x, y):
         return (0 <= v) and (v < board_size)
     return _in_range(x) and _in_range(y)
 
+
 @nb.jit(nb.boolean(nb.i4[:, :], nb.i4, nb.i4))
 def available(board, x, y):
     return valid(board, x, y) and board[x][y] == -1
 
+
 # Or: @nb.jit(nb.boolean(nb.i4[:, :], nb.types.UniTuple(nb.i4, 2), nb.i4))
 # Or: @nb.jit(nb.boolean(nb.i4[:, :], nb.typeof((1, 1)), nb.i4))
 @nb.jit('boolean(i4[:, :], UniTuple(i4, 2), i4)')
-def checkForWin(board, pos, num_win):
-    def _checkLines(pos, delta, player):
+def check_win(board, pos, num_win):
+    def _check_lines(pos, delta, player):
         x, y = pos
         dx, dy = delta
 
         count = 0
-        while(valid(board, x, y)):
+        while valid(board, x, y):
             if board[x][y] == player:
                 x += dx
                 y += dy
@@ -35,11 +38,12 @@ def checkForWin(board, pos, num_win):
 
     player = board[pos]
     for (dx, dy) in dirs:
-        sum_1 = _checkLines( pos, ( dx,  dy), player )
-        sum_2 = _checkLines( pos, (-dx, -dy), player )
+        sum_1 = _check_lines( pos, ( dx,  dy), player )
+        sum_2 = _check_lines( pos, (-dx, -dy), player )
         if (sum_1 + sum_2) >= (num_win - 1):
             return True
     return False
+
 
 class GomokuState(object):
     def __init__(self, board):
@@ -55,7 +59,8 @@ class GomokuState(object):
 
     @property
     def valid_actions(self):
-        return list(zip(*np.where(self.board==-1)))
+        return list(zip(*np.where(self.board == -1)))
+
 
 class GomokuEnv(gym.Env):
     def __init__(self, board_size, num_win, num_player=2):
@@ -95,7 +100,7 @@ class GomokuEnv(gym.Env):
         self._turn += 1
 
         full = self._turn >= self._board_size**2
-        win = checkForWin(self._board, (x, y), num_win=self._num_win)
+        win = check_win(self._board, (x, y), num_win=self._num_win)
 
         done = full or win
         reward = int(win)
