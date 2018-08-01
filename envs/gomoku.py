@@ -51,6 +51,10 @@ class GomokuState(object):
         self.board = board
         self._last_move = last_move
         self._turn = turn
+        self._valid_actions = None
+
+        self._done = None
+        self._result = None
 
     def __hash__(self):
         return hash(self.board.tobytes())
@@ -61,16 +65,28 @@ class GomokuState(object):
 
     @property
     def valid_actions(self):
-        return list(zip(*np.where(self.board == -1)))
+        if self._valid_actions is None:
+            self._valid_actions = list(zip(*np.where(self.board == -1)))
+        return self._valid_actions
 
     @property
     def done(self):
-        if self._last_move is None:
-            return False
-        else:
-            full = self._turn >= self.env._board_size**2
-            win = check_win(self.board, self._last_move, self.env._num_win)
-            return full or win
+        if self._done is None:
+            if self._last_move is None: # First Move
+                self._done = False
+                self._result = 0
+            else:
+                full = self._turn >= self.env._board_size**2
+                win = check_win(self.board, self._last_move, self.env._num_win)
+                self._done = full or win
+                self._result = int(win)
+        return self._done
+
+    @property
+    def result(self):
+        if self._result is None:
+            self.done
+        return self._result
 
     @property
     def cur_player(self):

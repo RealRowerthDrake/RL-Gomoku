@@ -20,6 +20,13 @@ def evaluate(env, players, num_games):
 if __name__ == '__main__':
     env = GomokuEnv(3, 3)
 
+    print("MCTSPlayer vs Random")
+    result = evaluate(env, (MCTSPlayer(1000), RandomPlayer()), 5)
+    print("-- 1P: ", "#Win={}, #Lose={}, #Draw={}".format(result[0], result[1], result[2]))
+    result = evaluate(env, (RandomPlayer(), MCTSPlayer(1000)), 5)
+    print("-- 2P: ", "#Win={}, #Lose={}, #Draw={}".format(result[1], result[0], result[2]))
+    print()
+
     from models.td import train
     import models.sarsa
     Q1 = train(env, models.sarsa.build_fn, 1000)
