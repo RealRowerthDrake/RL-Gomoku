@@ -3,55 +3,49 @@ from envs import GomokuEnv
 from players import *
 
 
-def evaluate(env, players, num_games):
-    def play_once():
-        state = env.reset()
-        while(True):
-            action = players[state.cur_player].move(state)
-            state, reward, done, _ = env.step(action)
-            if done:
-                return reward if state.cur_player == 1 else -reward
-    stats = [0] * 3
-    for _ in range(num_games):
-        stats[play_once()] += 1
-    return stats[1], stats[-1], stats[0]
+def evaluate(env, players, num_plays):
+    def play(players, num_plays):
+        def play_once():
+            state = env.reset()
+            while(True):
+                action = players[state.cur_player].move(state)
+                state, reward, done, _ = env.step(action)
+                if done:
+                    return reward if state.cur_player == 1 else -reward
+        stats = [0] * 3
+        for _ in range(num_plays):
+            stats[play_once()] += 1
+        return stats[1], stats[-1], stats[0]
+
+    result = play(players, num_plays)
+    print("-- 1P: ", "#Win={}, #Lose={}, #Draw={}".format(result[0], result[1], result[2]))
+    result = play(players[::-1], num_plays)
+    print("-- 2P: ", "#Win={}, #Lose={}, #Draw={}".format(result[1], result[0], result[2]))
+    print()
 
 
 if __name__ == '__main__':
     env = GomokuEnv(3, 3)
 
     print("MCTSPlayer vs Random")
-    result = evaluate(env, (MCTSPlayer(1000), RandomPlayer()), 10)
-    print("-- 1P: ", "#Win={}, #Lose={}, #Draw={}".format(result[0], result[1], result[2]))
-    result = evaluate(env, (RandomPlayer(), MCTSPlayer(1000)), 10)
-    print("-- 2P: ", "#Win={}, #Lose={}, #Draw={}".format(result[1], result[0], result[2]))
-    print()
+    evaluate(env, (MCTSPlayer(1000), RandomPlayer()), 10)
 
     from models.td import train
-    import models.sarsa
-    Q1 = train(env, models.sarsa.build_fn, 1000)
-
-    import models.q_learning
-    Q2 = train(env, models.q_learning.build_fn, 1000)
+    from models import sarsa, q_learning
+    Q1 = train(env, sarsa.build_fn, 10000)
+    Q2 = train(env, q_learning.build_fn, 10000)
 
     print("Sarsa vs Random")
-    result = evaluate(env, (TDPlayer(Q1), RandomPlayer()), 100)
-    print("-- 1P: ", "#Win={}, #Lose={}, #Draw={}".format(result[0], result[1], result[2]))
-    result = evaluate(env, (RandomPlayer(), TDPlayer(Q1)), 100)
-    print("-- 2P: ", "#Win={}, #Lose={}, #Draw={}".format(result[1], result[0], result[2]))
-    print()
+    evaluate(env, (TDPlayer(Q1), RandomPlayer()), 100)
 
-    print("Q-learning vs Random")
-    result = evaluate(env, (TDPlayer(Q2), RandomPlayer()), 100)
-    print("-- 1P: ", "#Win={}, #Lose={}, #Draw={}".format(result[0], result[1], result[2]))
-    result = evaluate(env, (RandomPlayer(), TDPlayer(Q2)), 100)
-    print("-- 2P: ", "#Win={}, #Lose={}, #Draw={}".format(result[1], result[0], result[2]))
-    print()
+    print("Q-Learning vs Random")
+    evaluate(env, (TDPlayer(Q2), RandomPlayer()), 100)
 
     print("Sarsa vs Q-learning")
-    result = evaluate(env, (TDPlayer(Q1), TDPlayer(Q2)), 100)
-    print("-- 1P: ", "#Win={}, #Lose={}, #Draw={}".format(result[0], result[1], result[2]))
-    result = evaluate(env, (TDPlayer(Q2), TDPlayer(Q1)), 100)
-    print("-- 2P: ", "#Win={}, #Lose={}, #Draw={}".format(result[1], result[0], result[2]))
-    print()
+    evaluate(env, (TDPlayer(Q1), TDPlayer(Q2)), 100)
 
+    print("MCTSPlayer vs Sarsa")
+    evaluate(env, (MCTSPlayer(1000), TDPlayer(Q1)), 10)
+
+    print("MCTSPlayer vs Q-Learning")
+    evaluate(env, (MCTSPlayer(1000), TDPlayer(Q2)), 10)
