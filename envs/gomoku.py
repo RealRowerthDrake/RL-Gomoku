@@ -13,8 +13,9 @@ def valid(board, x, y):
 def available(board, x, y):
     return valid(board, x, y) and board[x][y] == -1
 
-@nb.jit(nb.boolean(nb.i4[:, :], nb.i4, nb.i4, nb.i4))
-def checkForWin(board, x, y, num_win):
+# Note: nb.typeof((1, 1)) is abbr of nb.types.UniTuple(np.i4, np.i4)
+@nb.jit(nb.boolean(nb.i4[:, :], nb.typeof((1,1)), nb.i4))
+def checkForWin(board, pos, num_win):
     def _checkLines(pos, delta, player):
         x, y = pos
         dx, dy = delta
@@ -31,10 +32,10 @@ def checkForWin(board, x, y, num_win):
 
     dirs = ( (1, 0), (0, 1), (1, 1), (1, -1) )
 
-    player = board[x][y]
+    player = board[pos]
     for (dx, dy) in dirs:
-        sum_1 = _checkLines( (x, y), ( dx,  dy), player )
-        sum_2 = _checkLines( (x, y), (-dx, -dy), player )
+        sum_1 = _checkLines( pos, ( dx,  dy), player )
+        sum_2 = _checkLines( pos, (-dx, -dy), player )
         if (sum_1 + sum_2) >= (num_win - 1):
             return True
     return False
@@ -42,11 +43,13 @@ def checkForWin(board, x, y, num_win):
 class GomokuState(object):
     def __init__(self, board):
         self.board = board
+        self.board.setflags(write=False)
 
     def __hash__(self):
         return hash(self.board.tobytes())
 
     def __eq__(self, other):
+        # Note: it seems that np.array_equal could be slower?
         return (self.board == other.board).all()
 
     @property
@@ -91,7 +94,7 @@ class GomokuEnv(gym.Env):
         self._turn += 1
 
         full = self._turn >= self._board_size**2
-        win = checkForWin(self._board, x, y, num_win=self._num_win)
+        win = checkForWin(self._board, (x, y), num_win=self._num_win)
 
         done = full or win
         reward = int(win)
