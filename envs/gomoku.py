@@ -13,8 +13,9 @@ def valid(board, x, y):
 def available(board, x, y):
     return valid(board, x, y) and board[x][y] == -1
 
-# Note: nb.typeof((1, 1)) is abbr of nb.types.UniTuple(np.i4, np.i4)
-@nb.jit(nb.boolean(nb.i4[:, :], nb.typeof((1,1)), nb.i4))
+# Or: @nb.jit(nb.boolean(nb.i4[:, :], nb.types.UniTuple(nb.i4, 2), nb.i4))
+# Or: @nb.jit(nb.boolean(nb.i4[:, :], nb.typeof((1, 1)), nb.i4))
+@nb.jit('boolean(i4[:, :], UniTuple(i4, 2), i4)')
 def checkForWin(board, pos, num_win):
     def _checkLines(pos, delta, player):
         x, y = pos
@@ -62,7 +63,7 @@ class GomokuEnv(gym.Env):
         self._num_win = num_win
         self._num_player = num_player
 
-        self._board = - np.ones((self._board_size, self._board_size), dtype=np.int32)
+        self._board = - np.ones((board_size, board_size), dtype=np.int32)
         self._turn = None
         self.reset()
 
