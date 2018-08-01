@@ -1,34 +1,6 @@
 import random
 from envs import GomokuEnv
-
-
-class RandomPlayer(object):
-    def __init__(self):
-        pass
-
-    def move(self, state):
-        return random.choice(state.valid_actions)
-
-
-class HumanPlayer(object):
-    def __init__(self):
-        pass
-
-    def move(self, state):
-        print(state)
-        pos = tuple(map(int, input().split(",")))
-        return pos
-
-
-class TDPlayer(object):
-    def __init__(self, table):
-        self._table = table
-
-    def move(self, state):
-        if self._table[state] is None:
-            return random.choice(state.valid_actions)
-        else:
-            return max(self._table[state].items(), key=lambda x: x[-1])[0]
+from players import *
 
 
 def evaluate(env, players, num_games):
