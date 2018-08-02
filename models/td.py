@@ -4,8 +4,8 @@ from collections import defaultdict
 
 class Agent(object):
     def __init__(self, maxlen=2):
-        self.state = deque(maxlen=maxlen)
-        self.action = deque(maxlen=maxlen)
+        self.states = deque(maxlen=maxlen)
+        self.actions = deque(maxlen=maxlen)
 
 
 def train(env, build_fn, episodes=100, epsilon=0.1, alpha=0.01, gamma=0.1):
@@ -20,24 +20,24 @@ def train(env, build_fn, episodes=100, epsilon=0.1, alpha=0.01, gamma=0.1):
         last_reward = 0
         last_player = None
 
-        agents[0].state.append(state)
-        agents[0].action.append(action)
+        agents[0].states.append(state)
+        agents[0].actions.append(action)
 
         while True:
             state, reward, done, _ = env.step(action)
             action = ctrl_fn(state)
 
             player = state.cur_player
-            agents[player].state.append(state)
-            agents[player].action.append(action)
-            if len(agents[player].state) > 1:
-                eval_fn(agents[player].state[0], agents[player].action[0],
+            agents[player].states.append(state)
+            agents[player].actions.append(action)
+            if len(agents[player].states) > 1:
+                eval_fn(agents[player].states[0], agents[player].actions[0],
                         last_reward - reward,
-                        agents[player].state[1], agents[player].action[1])
+                        agents[player].states[1], agents[player].actions[1])
 
             if done:
                 # Update last player
-                eval_fn(agents[last_player].state[1], agents[last_player].action[1],
+                eval_fn(agents[last_player].states[1], agents[last_player].actions[1],
                         reward,
                         None, None)
                 break

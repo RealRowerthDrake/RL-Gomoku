@@ -66,7 +66,7 @@ class GomokuState(object):
     @property
     def valid_actions(self):
         if self._valid_actions is None:
-            self._valid_actions = list(zip(*np.where(self.board == -1)))
+            self._valid_actions = np.where(self.board.flatten() == -1)[0]
         return self._valid_actions
 
     @property
@@ -76,8 +76,11 @@ class GomokuState(object):
                 self._done = False
                 self._result = 0
             else:
-                full = self._turn >= self.env._board_size**2
-                win = check_win(self.board, self._last_move, self.env._num_win)
+                board_size = self.env._board_size
+                full = self._turn >= board_size**2
+                x = self._last_move // board_size
+                y = self._last_move % board_size
+                win = check_win(self.board, (x, y), self.env._num_win)
                 self._done = full or win
                 self._result = int(win)
         return self._done
@@ -94,12 +97,12 @@ class GomokuState(object):
 
     def act(self, action):
         board = self.board.copy()
-
-        if not available(board, *action):
+        x, y = action // self.env._board_size, action % self.env._board_size
+        if not available(board, x, y):
             print("Illegal Move for player {}".format(self.cur_player))
             raise ValueError
 
-        board[action] = self.cur_player
+        board[x, y] = self.cur_player
         return GomokuState(self.env, board, action, self._turn + 1)
 
     def reset(self):
@@ -127,8 +130,7 @@ class GomokuEnv(gym.Env):
 
     def step(self, action):
         self.state = self.state.act(action)
-        reward = int(check_win(self.state.board, action, self._num_win))
-        return self.state, reward, self.state.done, {}
+        return self.state, self.state.result, self.state.done, {}
 
     def render(self, mode='human'):
         raise NotImplementedError
