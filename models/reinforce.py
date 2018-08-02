@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.distributions import Categorical
 
 
 class PolicyNet(nn.Module):
@@ -26,11 +27,11 @@ def build_ctrl_fn(net):
         probs = net(state_feats)
         mask = torch.zeros_like(probs).index_fill_(1, torch.from_numpy(state.valid_actions), 1)
         probs = probs * mask
-        action = probs.multinomial(1).item()
-        log_prob = probs[:, action].log()
+        m = Categorical(probs)
+        action = m.sample()
 
-        net.log_probs.append(log_prob)
-        return action
+        net.log_probs.append(m.log_prob(action))
+        return action.item()
 
     return ctrl_fn
 
