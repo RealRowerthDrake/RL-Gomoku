@@ -1,0 +1,90 @@
+* RL-Gomoku
+Implementation of several Reinforcement Learning Algorithms. The codes are optimized to some extent, while ensuring the simpleness & cleanness.
+
+** Current Progress
+
++ [X] Sarsa (Tabular)
++ [X] Q-Learning (Tabular)
++ [X] Monte Carlo Tree Search (UCT)
++ [X] REINFORCE
++ [X] Actor-Critic
++ [ ] TO BE ADDED
+
+** Usage
+
+#+BEGIN_SRC
+> python3 main.py
+#+END_SRC
+
+** Sample 
+
+#+BEGIN_SRC
+Random vs Random
+-- 1P:  #Win=56, #Lose=29, #Draw=15
+-- 2P:  #Win=20, #Lose=67, #Draw=13
+
+Sarsa vs Random
+-- 1P:  #Win=98, #Lose=0, #Draw=2
+-- 2P:  #Win=60, #Lose=28, #Draw=12
+
+Q-Learning vs Random
+-- 1P:  #Win=99, #Lose=0, #Draw=1
+-- 2P:  #Win=58, #Lose=34, #Draw=8
+
+REINFORCE vs Random
+-- 1P:  #Win=59, #Lose=30, #Draw=11
+-- 2P:  #Win=34, #Lose=51, #Draw=15
+
+Actor-Critic vs Random
+-- 1P:  #Win=82, #Lose=11, #Draw=7
+-- 2P:  #Win=48, #Lose=51, #Draw=1
+
+MCTSPlayer vs Random
+-- 1P:  #Win=9, #Lose=0, #Draw=1
+-- 2P:  #Win=9, #Lose=0, #Draw=1
+
+Sarsa vs Q-learning
+-- 1P:  #Win=100, #Lose=0, #Draw=0
+-- 2P:  #Win=0, #Lose=0, #Draw=100
+
+REINFORCE vs Sarsa
+-- 1P:  #Win=9, #Lose=90, #Draw=1
+-- 2P:  #Win=0, #Lose=100, #Draw=0
+
+REINFORCE vs Q-learning
+-- 1P:  #Win=30, #Lose=55, #Draw=15
+-- 2P:  #Win=0, #Lose=98, #Draw=2
+
+Actor-Critic vs Sarsa
+-- 1P:  #Win=0, #Lose=97, #Draw=3
+-- 2P:  #Win=0, #Lose=100, #Draw=0
+
+Actor-Critic vs Q-learning
+-- 1P:  #Win=44, #Lose=56, #Draw=0
+-- 2P:  #Win=0, #Lose=100, #Draw=0
+
+Actor-Critic vs REINFORCE
+-- 1P:  #Win=66, #Lose=22, #Draw=12
+-- 2P:  #Win=19, #Lose=81, #Draw=0
+
+MCTSPlayer vs Sarsa
+-- 1P:  #Win=6, #Lose=1, #Draw=3
+-- 2P:  #Win=0, #Lose=1, #Draw=9
+
+MCTSPlayer vs Q-Learning
+-- 1P:  #Win=9, #Lose=0, #Draw=1
+-- 2P:  #Win=0, #Lose=0, #Draw=10
+
+MCTSPlayer vs REINFORCE
+-- 1P:  #Win=10, #Lose=0, #Draw=0
+-- 2P:  #Win=10, #Lose=0, #Draw=0
+
+MCTSPlayer vs Actor-Critic
+-- 1P:  #Win=9, #Lose=0, #Draw=1
+-- 2P:  #Win=10, #Lose=0, #Draw=0
+#+END_SRC
+
+** Requirements
++ Numpy
++ Numba
++ PyTorch(0.4.1)
