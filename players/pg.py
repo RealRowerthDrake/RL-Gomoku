@@ -1,4 +1,4 @@
-class REINFORCEPlayer(object):
+class PolicyGradientPlayer(object):
     def __init__(self, ctrl_fns):
         self._ctrl_fns = ctrl_fns
 
