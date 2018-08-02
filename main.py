@@ -41,15 +41,19 @@ if __name__ == '__main__':
     print("Q-Learning vs Random")
     evaluate(env, (TDPlayer(Q2), RandomPlayer()), 100)
 
-    from models import reinforce
+    from models import reinforce, actor_critic
     """
         Note: Since the variance of REINFORCE is quite large, it cannot be trainning for too long, or the gradient might be exploded.
     """
     F1 = reinforce.train(env, 1000)
+    F2 = actor_critic.train(env, 10000)
 
 
     print("REINFORCE vs Random")
     evaluate(env, (PolicyGradientPlayer(F1), RandomPlayer()), 100)
+
+    print("Actor-Critic vs Random")
+    evaluate(env, (PolicyGradientPlayer(F2), RandomPlayer()), 100)
 
     print("MCTSPlayer vs Random")
     evaluate(env, (MCTSPlayer(1000), RandomPlayer()), 10)
@@ -63,6 +67,15 @@ if __name__ == '__main__':
     print("REINFORCE vs Q-learning")
     evaluate(env, (PolicyGradientPlayer(F1), TDPlayer(Q2)), 100)
 
+    print("Actor-Critic vs Sarsa")
+    evaluate(env, (PolicyGradientPlayer(F2), TDPlayer(Q1)), 100)
+
+    print("Actor-Critic vs Q-learning")
+    evaluate(env, (PolicyGradientPlayer(F2), TDPlayer(Q2)), 100)
+
+    print("Actor-Critic vs REINFORCE")
+    evaluate(env, (PolicyGradientPlayer(F2), PolicyGradientPlayer(F1)), 100)
+
     print("MCTSPlayer vs Sarsa")
     evaluate(env, (MCTSPlayer(1000), TDPlayer(Q1)), 10)
 
@@ -71,3 +84,6 @@ if __name__ == '__main__':
 
     print("MCTSPlayer vs REINFORCE")
     evaluate(env, (MCTSPlayer(1000), PolicyGradientPlayer(F1)), 10)
+
+    print("MCTSPlayer vs Actor-Critic")
+    evaluate(env, (MCTSPlayer(1000), PolicyGradientPlayer(F2)), 10)
