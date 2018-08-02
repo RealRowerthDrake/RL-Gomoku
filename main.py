@@ -27,8 +27,8 @@ def evaluate(env, players, num_plays):
 if __name__ == '__main__':
     env = GomokuEnv(3, 3)
 
-    print("MCTSPlayer vs Random")
-    evaluate(env, (MCTSPlayer(1000), RandomPlayer()), 10)
+    print("Random vs Random")
+    evaluate(env, (RandomPlayer(), RandomPlayer()), 100)
 
     from models.td import train
     from models import sarsa, q_learning
@@ -41,11 +41,29 @@ if __name__ == '__main__':
     print("Q-Learning vs Random")
     evaluate(env, (TDPlayer(Q2), RandomPlayer()), 100)
 
+    from models.reinforce import train
+    ctrl_fns = train(env, 1000)
+
+    print("REINFORCE vs Random")
+    evaluate(env, (REINFORCEPlayer(ctrl_fns), RandomPlayer()), 100)
+
+    print("MCTSPlayer vs Random")
+    evaluate(env, (MCTSPlayer(1000), RandomPlayer()), 10)
+
     print("Sarsa vs Q-learning")
     evaluate(env, (TDPlayer(Q1), TDPlayer(Q2)), 100)
+
+    print("REINFORCE vs Sarsa")
+    evaluate(env, (REINFORCEPlayer(ctrl_fns), TDPlayer(Q1)), 100)
+
+    print("REINFORCE vs Q-learning")
+    evaluate(env, (REINFORCEPlayer(ctrl_fns), TDPlayer(Q2)), 100)
 
     print("MCTSPlayer vs Sarsa")
     evaluate(env, (MCTSPlayer(1000), TDPlayer(Q1)), 10)
 
     print("MCTSPlayer vs Q-Learning")
     evaluate(env, (MCTSPlayer(1000), TDPlayer(Q2)), 10)
+
+    print("MCTSPlayer vs REINFORCE")
+    evaluate(env, (MCTSPlayer(1000), REINFORCEPlayer(ctrl_fns)), 10)
