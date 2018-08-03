@@ -6,7 +6,7 @@ Implementation of several Reinforcement Learning Algorithms. The codes are optim
 + [X] Sarsa (Tabular)
 + [X] Q-Learning (Tabular)
 + [X] Monte Carlo Tree Search (UCT)
-+ [X] REINFORCE
++ [X] REINFORCE (w/ & w/o Baseline)
 + [X] Actor-Critic
 + [ ] TO BE ADDED
 
