@@ -13,8 +13,8 @@ class PolicyNet(nn.Module):
         self.policy_head = nn.Linear(100, num_actions)
         self.value_head = nn.Linear(100, 1)
 
-        self.log_probs = []
-        self.values = []
+        self.log_prob = None
+        self.value = None
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
@@ -32,58 +32,62 @@ def build_ctrl_fn(net):
         m = Categorical(probs)
         action = m.sample()
 
-        net.log_probs.append(m.log_prob(action))
-        net.values.append(value)
+        net.log_prob = m.log_prob(action)
+        net.value = value
         return action.item()
 
     return ctrl_fn
 
 
+def build_optim_fn(optimizer, gamma):
+    def optim_fn(reward, value, next_value, log_prob):
+        target = reward + gamma * next_value
+        delta = target - value
+        policy_loss = -log_prob * delta.data
+        value_loss = F.smooth_l1_loss(value, target.data)
+        loss = policy_loss + value_loss
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    return optim_fn
+
 
 def train(env, episodes, gamma=0.9):
     num_actions = env._board_size ** 2
     nets = [PolicyNet(num_actions), PolicyNet(num_actions)]
-    optimizers = [optim.Adam(net.parameters()) for net in nets]
+    optimizers = [optim.Adam(net.parameters(), lr=1e-2) for net in nets]
+
     ctrl_fns = [build_ctrl_fn(net) for net in nets]
+    optim_fns = [build_optim_fn(optimizer, gamma) for optimizer in optimizers]
 
     for episode in range(episodes):
         state = env.reset()
-        rewards = []
+        action = ctrl_fns[state.cur_player](state)
 
+        last_reward = None
         done = False
         while not done:
-            action = ctrl_fns[state.cur_player](state)
             state, reward, done, _ = env.step(action)
-            rewards.append(reward)
 
-        rewards = np.array(rewards)
-        rewards[:-1] -= rewards[1:]
+            if last_reward is not None:
+                r = last_reward - reward
+                value = nets[state.cur_player].value
+                log_prob = nets[state.cur_player].log_prob
+                if not done:
+                    action = ctrl_fns[state.cur_player](state)
+                    next_value = nets[state.cur_player].value
+                else:
+                    next_value = torch.tensor([[0.0]])
 
-        rewards = [rewards[0::2], rewards[1::2]]
-        for i, (net, optimizer) in enumerate(zip(nets, optimizers)):
-            Rs, R = [], 0
-            for r in reversed(rewards[i]):
-                R = gamma * R + r
-                Rs.insert(0, R)
-            Rs = torch.tensor(Rs)
-            Rs = (Rs - Rs.mean()) / (Rs.std() + 1e-3)
+                optim_fns[state.cur_player](r, value, next_value, log_prob)
 
-            policy_loss = []
-            value_loss = []
-            for t, (R, value) in enumerate(zip(Rs, net.values)):
-                policy_loss.append(-net.log_probs[t] * (R - value.item()))
-                value_loss.append(F.smooth_l1_loss(value, torch.tensor([[R]])))
-            policy_loss = torch.stack(policy_loss).sum()
-            value_loss = torch.stack(value_loss).sum()
-            loss = policy_loss + value_loss
+                del value
+                del log_prob
+            else:
+                action = ctrl_fns[state.cur_player](state)
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            del net.log_probs[:]
-            del net.values[:]
-        del rewards
+            last_reward = reward
 
     return ctrl_fns
-
