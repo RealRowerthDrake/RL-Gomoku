@@ -1,48 +1,62 @@
-from collections import deque
 from collections import defaultdict
-
+from collections import deque
 
 class Agent(object):
-    def __init__(self, maxlen=2):
+    def __init__(self, eval_fn, ctrl_fn, maxlen=2):
         self.states = deque(maxlen=maxlen)
         self.actions = deque(maxlen=maxlen)
 
+        self._eval = eval_fn
+        self._ctrl = ctrl_fn
 
-def train(env, build_fn, episodes=100, epsilon=0.1, alpha=0.01, gamma=0.1):
+    def eval(self, reward, terminal=False):
+        if terminal:
+            self._eval(self.states[-1], self.actions[-1], reward, None, None)
+        else:
+            self._eval(self.states[0], self.actions[0],
+                       reward,
+                       self.states[1], self.actions[1])
+
+    def ctrl(self, state):
+        action = self._ctrl(state)
+
+        self.states.append(state)
+        self.actions.append(action)
+        return action
+
+    def reset(self):
+        self.states.clear()
+        self.actions.clear()
+
+
+def train(env, build_fn, episodes=100, epsilon=0.1, alpha=0.01, gamma=0.9):
     Q = defaultdict(lambda: None)
-    eval_fn, ctrl_fn = build_fn(Q, eps=epsilon, alpha=alpha, gamma=gamma)
+    params = {
+        'eps': epsilon,
+        'alpha': alpha,
+        'gamma': gamma,
+    }
+    agents = [Agent(*build_fn(Q, **params)) for _ in range(env.num_player)]
 
     for i in range(episodes):
-        agents = [Agent() for _ in range(env.num_player)]
-
         state = env.reset()
-        action = ctrl_fn(state)
-        last_reward = 0
-        last_player = None
+        for agent in agents: agent.reset()
 
-        agents[0].states.append(state)
-        agents[0].actions.append(action)
+        action = agents[state.cur_player].ctrl(state)
 
-        while True:
+        last_reward = None
+        done = False
+        while not done:
             state, reward, done, _ = env.step(action)
-            action = ctrl_fn(state)
 
-            player = state.cur_player
-            agents[player].states.append(state)
-            agents[player].actions.append(action)
-            if len(agents[player].states) > 1:
-                eval_fn(agents[player].states[0], agents[player].actions[0],
-                        last_reward - reward,
-                        agents[player].states[1], agents[player].actions[1])
-
-            if done:
-                # Update last player
-                eval_fn(agents[last_player].states[1], agents[last_player].actions[1],
-                        reward,
-                        None, None)
-                break
+            if not done:
+                action = agents[state.cur_player].ctrl(state)
+            if last_reward is not None:
+                agents[state.cur_player].eval(last_reward - reward, done)
 
             last_reward = reward
-            last_player = player
+
+        next_player = 1 - state.cur_player
+        agents[next_player].eval(last_reward, done)
 
     return Q
