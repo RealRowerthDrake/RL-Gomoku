@@ -22,18 +22,23 @@ class PolicyNet(nn.Module):
         return policy, value
 
 
-def build_ctrl_fn(net):
+def build_ctrl_fn(net, train=False):
     def ctrl_fn(state):
         state_feats = torch.from_numpy(state.board.flatten()).float().unsqueeze(0)
         probs, value = net(state_feats)
         mask = torch.zeros_like(probs).index_fill_(1, torch.from_numpy(state.valid_actions), 1)
         probs = probs * mask
-        m = Categorical(probs)
-        action = m.sample()
 
-        net.log_prob = m.log_prob(action)
-        net.value = value
-        return action.item()
+        if train:
+            m = Categorical(probs)
+            action = m.sample()
+
+            net.log_prob = m.log_prob(action)
+            net.value = value
+            return action.item()
+        else:
+            action = probs.argmax(dim=-1)
+            return action.item()
 
     return ctrl_fn
 
@@ -58,7 +63,7 @@ def train(env, episodes, gamma=0.9):
     nets = [PolicyNet(num_actions), PolicyNet(num_actions)]
     optimizers = [optim.Adam(net.parameters(), lr=1e-2) for net in nets]
 
-    ctrl_fns = [build_ctrl_fn(net) for net in nets]
+    ctrl_fns = [build_ctrl_fn(net, train=True) for net in nets]
     optim_fns = [build_optim_fn(optimizer, gamma) for optimizer in optimizers]
 
     for episode in range(episodes):
@@ -89,4 +94,4 @@ def train(env, episodes, gamma=0.9):
 
             last_reward = reward
 
-    return ctrl_fns
+    return [build_ctrl_fn(net, train=False) for net in nets]
